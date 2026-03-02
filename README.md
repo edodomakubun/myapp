@@ -20,86 +20,78 @@ Aplikasi Absensi Sekolah berbasis web (PWA) yang ringan, cepat, dan gratis mengg
 - **Kelola Izin (Approval):** Menyetujui atau menolak pengajuan izin dari guru.
 - **Kelola Data Guru:** Menambah dan menghapus data guru beserta PIN-nya.
 - **Pengaturan Absen:** Mengatur jam masuk, jam terlambat, jam pulang, serta lokasi sekolah (Latitude, Longitude) dan batas radius absensi (Geofencing) dalam hitungan meter.
-- **Kelola Hari Libur:** Menambah dan menghapus daftar hari libur. Absensi akan otomatis ditolak jika guru mencoba absen pada hari libur.
+- **Kelola Hari Libur:** Menambah dan menghapus daftar hari libur. Absensi otomatis ditolak pada hari libur.
 
 ---
 
-## Panduan Pemasangan (Deployment Guide)
+## Panduan Pemasangan Tanpa Terminal (Via Website Cloudflare & GitHub)
 
-Berikut adalah langkah-langkah untuk memasang dan meng-online-kan aplikasi ini ke akun Cloudflare Anda.
+Anda **tidak memerlukan terminal lokal**. Anda dapat mendeploy aplikasi ini langsung dari website Cloudflare dengan menghubungkannya ke repositori GitHub.
 
 ### Prasyarat
-1. Akun **[Cloudflare](https://dash.cloudflare.com/)** (Daftar jika belum punya).
-2. **Node.js** terinstal di komputer Anda.
-3. Terminal / Command Prompt.
+1. Akun **[GitHub](https://github.com/)** yang sudah menyimpan (Push/Fork) repositori aplikasi ini.
+2. Akun **[Cloudflare](https://dash.cloudflare.com/)**.
 
-### 1. Login ke Cloudflare melalui Terminal
-Buka terminal di folder project ini, lalu jalankan:
-```bash
-npx wrangler login
-```
-*Akan terbuka halaman browser. Silakan setujui (Authorize) agar Wrangler dapat mengakses akun Cloudflare Anda.*
+### Langkah 1: Buat Database D1
+1. Login ke Dashboard Cloudflare.
+2. Di menu sebelah kiri, cari bagian **Workers & Pages**, lalu pilih **D1 SQL Database**.
+3. Klik tombol **Create database**.
+4. Beri nama database Anda (misalnya: `absensi-db`), lalu klik **Create**.
+5. Setelah terbuat, masuk ke database tersebut, lalu pilih tab **Console**.
+6. Buka file `schema.sql` di repository Anda (GitHub), **salin semua teksnya**, lalu **paste** ke dalam kotak Console D1 tersebut dan klik **Execute**. Ini akan membuat tabel-tabel yang dibutuhkan.
 
-### 2. Buat Database D1
-Buat database baru untuk menyimpan data absensi:
-```bash
-npx wrangler d1 create absensi-db
-```
-Catat `database_id` yang muncul di terminal. Buka file `wrangler.toml` dan perbarui baris berikut dengan ID yang baru saja Anda dapatkan:
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "absensi-db"
-database_id = "MASUKKAN_DATABASE_ID_ANDA_DI_SINI"
-```
+### Langkah 2: Buat R2 Bucket (Penyimpanan Foto)
+1. Di menu sebelah kiri Cloudflare, pilih **R2 Object Storage**.
+2. Jika belum pernah menggunakan R2, Anda akan diminta memasukkan metode pembayaran untuk aktivasi (R2 memiliki paket gratis yang sangat besar, jadi Anda tidak akan ditagih untuk penggunaan wajar).
+3. Klik tombol **Create bucket**.
+4. Beri nama bucket Anda (harus persis: `absensi-bucket`), lalu klik **Create bucket**.
 
-### 3. Inisialisasi Tabel Database
-Masukkan struktur tabel dan pengaturan awal ke dalam database yang baru dibuat:
-```bash
-npx wrangler d1 execute absensi-db --file=./schema.sql --remote
-```
+### Langkah 3: Deploy ke Cloudflare Pages
+1. Di menu sebelah kiri Cloudflare, pilih **Workers & Pages**, lalu masuk ke menu **Overview**.
+2. Klik tombol **Create application**, lalu pilih tab **Pages**.
+3. Pilih **Connect to Git** dan hubungkan akun GitHub Anda.
+4. Pilih repositori aplikasi absensi ini, lalu klik **Begin setup**.
+5. Di halaman Set Up Builds and Deployments, pastikan pengaturannya seperti ini:
+   - **Project name:** (Terserah Anda, misalnya: `absensi-sekolah`)
+   - **Production branch:** `main` (Atau branch yang Anda gunakan)
+   - **Framework preset:** `None`
+   - **Build command:** `npm install && npm run build`
+   - **Build output directory:** `public`
+   - Buka **Environment variables (advanced)**, lalu tambahkan variabel baru:
+     - Variable name: `JWT_SECRET`
+     - Value: *(Isi dengan kata sandi rahasia yang acak, misal: `Rahas1a4bs3ns1ku`)*
+6. Klik **Save and Deploy**. (Proses ini akan gagal karena kita belum menghubungkan D1 dan R2. Jangan khawatir!).
 
-### 4. Buat R2 Bucket (Penyimpanan Foto)
-Buat bucket R2 untuk menyimpan foto selfie dan surat izin. *(Catatan: Anda mungkin perlu menambahkan kartu kredit/debit ke akun Cloudflare Anda untuk mengaktifkan R2, tetapi R2 memiliki kuota gratis/Free Tier yang sangat besar sehingga Anda tidak akan dikenakan biaya untuk penggunaan wajar).*
-```bash
-npx wrangler r2 bucket create absensi-bucket
-```
-*(Nama `absensi-bucket` sudah dikonfigurasi di dalam `wrangler.toml`)*.
+### Langkah 4: Hubungkan Pages dengan D1 dan R2
+Setelah deploy pertama selesai (meskipun gagal), masuk ke **Settings** dari project Pages Anda.
 
-### 5. Atur Secret Key untuk Keamanan (JWT)
-Aplikasi ini menggunakan JWT untuk mengamankan login. Anda harus mengatur *secret key* acak di Cloudflare:
-```bash
-npx wrangler pages secret put JWT_SECRET
-```
-*Saat diminta memasukkan value, ketikkan teks acak yang panjang dan sulit ditebak (misalnya: `KunciRahas1aAbs3nsiSek0lah2024!`), lalu tekan Enter.*
+1. Buka menu **Settings > Functions**.
+2. Gulir ke bawah ke bagian **D1 database bindings**:
+   - Klik **Add binding**.
+   - **Variable name:** Isi dengan `DB`.
+   - **D1 database:** Pilih database `absensi-db` yang Anda buat di Langkah 1.
+3. Gulir ke bawah ke bagian **R2 bucket bindings**:
+   - Klik **Add binding**.
+   - **Variable name:** Isi dengan `BUCKET`.
+   - **R2 bucket:** Pilih bucket `absensi-bucket` yang Anda buat di Langkah 2.
+4. Klik **Save**.
 
-### 6. Uji Coba Secara Lokal (Opsional)
-Jika Anda ingin mencoba aplikasi di komputer Anda sebelum di-deploy, jalankan:
-```bash
-npx wrangler d1 execute absensi-db --file=./schema.sql --local
-npx wrangler pages dev public
-```
-Aplikasi akan berjalan di `http://localhost:8788`.
-- Akses Guru: `http://localhost:8788`
-- Akses Admin: `http://localhost:8788/admin.html` (Gunakan username `sdinleling@admin` dan password `Admin123`).
-
-### 7. Deploy ke Cloudflare Pages
-Jika semua sudah siap, deploy aplikasi agar bisa diakses secara online:
-```bash
-npx wrangler pages deploy public --project-name absensi-sekolah
-```
-Tunggu proses upload selesai. Anda akan mendapatkan URL publik aplikasi Anda (contoh: `https://absensi-sekolah.pages.dev`).
+### Langkah 5: Re-Deploy Aplikasi
+1. Kembali ke menu **Deployments** di project Pages Anda.
+2. Klik tombol tiga titik pada baris deployment terakhir, lalu pilih **Retry deployment** (atau Anda bisa memicu perubahan baru di GitHub).
+3. Setelah deployment selesai dan berhasil, klik URL yang disediakan oleh Cloudflare (misalnya: `https://absensi-sekolah.pages.dev`).
 
 ---
 
-## Informasi Login Default Admin
-Setelah aplikasi berhasil di-deploy, buka halaman admin di URL Anda:
-`https://[URL-ANDA].pages.dev/admin.html`
+## Informasi Login Admin Pertama Kali
+Setelah aplikasi berhasil online, buka halaman admin dengan menambahkan `/admin.html` di akhir URL Anda (contoh: `https://[URL-ANDA].pages.dev/admin.html`).
 
 - **Username:** `sdinleling@admin`
 - **Password:** `Admin123`
 
-*(Sangat disarankan untuk mengubah kode ini di file `public/_worker.js` jika ingin digunakan secara publik).*
-
-## Menambah Data Guru Pertama
-Karena database masih kosong, Anda harus **login sebagai Admin terlebih dahulu**, lalu masuk ke menu **Kelola Data Guru** untuk menambahkan ID dan PIN Guru. Setelah guru ditambahkan, guru tersebut baru bisa login di halaman utama.
+### Menambah Data Guru Pertama
+Karena database masih kosong, Anda harus:
+1. Login sebagai Admin.
+2. Buka menu **Kelola Data Guru**.
+3. Tambahkan ID, Nama, dan PIN Guru.
+4. Setelah berhasil, guru tersebut dapat login di halaman utama menggunakan ID dan PIN yang baru saja Anda buat.

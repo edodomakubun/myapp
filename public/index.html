@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi Sekolah</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4F46E5">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans">
+
+  <!-- Container -->
+  <div id="app-container" class="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+    <!-- View Router akan dimuat di sini menggunakan Vanilla JS -->
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js');
+      });
+    }
+  </script>
+</body>
+</html>

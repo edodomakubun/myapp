@@ -1,0 +1,21 @@
+{
+  "name": "Absensi Sekolah",
+  "short_name": "Absensi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "description": "Aplikasi Absensi Guru Berbasis Web",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

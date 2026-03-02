@@ -1,15 +1,10 @@
-DROP TABLE IF EXISTS absensi;
-DROP TABLE IF EXISTS izin;
-DROP TABLE IF EXISTS guru;
-DROP TABLE IF EXISTS pengaturan;
-
-CREATE TABLE guru (
+CREATE TABLE IF NOT EXISTS guru (
   id TEXT PRIMARY KEY,
   pin TEXT NOT NULL,
   nama TEXT NOT NULL
 );
 
-CREATE TABLE absensi (
+CREATE TABLE IF NOT EXISTS absensi (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   id_guru TEXT NOT NULL,
   iso_timestamp TEXT NOT NULL,
@@ -22,7 +17,7 @@ CREATE TABLE absensi (
   FOREIGN KEY(id_guru) REFERENCES guru(id)
 );
 
-CREATE TABLE izin (
+CREATE TABLE IF NOT EXISTS izin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   id_guru TEXT NOT NULL,
   tanggal TEXT NOT NULL,
@@ -32,7 +27,7 @@ CREATE TABLE izin (
   FOREIGN KEY(id_guru) REFERENCES guru(id)
 );
 
-CREATE TABLE pengaturan (
+CREATE TABLE IF NOT EXISTS pengaturan (
   id INTEGER PRIMARY KEY,
   jam_masuk_awal TEXT NOT NULL DEFAULT '06:00',
   jam_masuk_akhir TEXT NOT NULL DEFAULT '07:59',
@@ -45,10 +40,10 @@ CREATE TABLE pengaturan (
   radius_meter INTEGER NOT NULL DEFAULT 20
 );
 
-CREATE TABLE hari_libur (
+CREATE TABLE IF NOT EXISTS hari_libur (
   tanggal TEXT PRIMARY KEY,
   keterangan TEXT
 );
 
--- Inisiasi pengaturan default
-INSERT INTO pengaturan (id) VALUES (1);
+-- Inisiasi pengaturan default (Abaikan jika sudah ada)
+INSERT OR IGNORE INTO pengaturan (id) VALUES (1);

@@ -8,7 +8,7 @@ bucket = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "absensi-db"
-database_id = "d420eccd-8565-4055-aa0e-a6e59f1203da"
+database_id = "your-d1-database-id-here"
 
 [[r2_buckets]]
 binding = "BUCKET"

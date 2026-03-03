@@ -52,14 +52,6 @@ app.get('/uploads/:filename', async (c) => {
   return new Response(object.body, { headers });
 });
 
-// Fallback to serve static assets in Cloudflare Pages Advanced Mode
-app.all('*', async (c) => {
-  if (c.req.path.startsWith('/api/')) {
-    return c.json({ success: false, message: 'Not Found' }, 404);
-  }
-  return c.env.ASSETS.fetch(c.req.raw);
-});
-
 // Utility for calculating distance using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3; // metres
@@ -327,6 +319,14 @@ app.post('/api/admin/pengaturan', async (c) => {
     p.lokasi_lat, p.lokasi_lng, p.radius_meter
   ).run();
   return c.json({ success: true });
+});
+
+// Fallback to serve static assets in Cloudflare Pages Advanced Mode
+app.all('*', async (c) => {
+  if (c.req.path.startsWith('/api/')) {
+    return c.json({ success: false, message: 'Not Found' }, 404);
+  }
+  return c.env.ASSETS.fetch(c.req.raw);
 });
 
 export default app;
